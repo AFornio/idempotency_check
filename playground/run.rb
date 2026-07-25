@@ -9,6 +9,7 @@ require_relative "enqueue_job"
 require_relative "upsert_job"
 require_relative "sync_job"
 require_relative "job_args_cases"
+require_relative "random_update_job"
 
 puts "HappyJob idempotent?     #{IdempotencyCheck.idempotent? { HappyJob.perform }}"
 puts "BadJob idempotent?       #{IdempotencyCheck.idempotent? { BadJob.perform }}"
@@ -38,3 +39,6 @@ puts "user.increment! idempotent? #{IdempotencyCheck.idempotent? { user.incremen
 
 other_user = User.find_or_create_by(email: "n@n.com")
 puts "user.update!(email: 'hola') idempotent? #{IdempotencyCheck.idempotent? { other_user.update!(email: "hola") }}"
+
+puts "RandomUpdateJob idempotent? (strict)           #{IdempotencyCheck.idempotent? { RandomUpdateJob.perform }}"
+puts "RandomUpdateJob idempotent? (ignore_timestamps) #{IdempotencyCheck.idempotent?(ignore_timestamps: true) { RandomUpdateJob.perform }}"
