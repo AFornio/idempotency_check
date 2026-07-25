@@ -30,3 +30,11 @@ puts "DifferentArgsJob idempotent? (args distintos cada vez)  #{IdempotencyCheck
 # en dos checks independientes — confirmar que no se confunden entre sí.
 puts "FollowUpJob.perform_later(1, 2) idempotent? #{IdempotencyCheck.idempotent? { FollowUpJob.perform_later(1, 2) }}"
 puts "FollowUpJob.perform_later(3, 4) idempotent? #{IdempotencyCheck.idempotent? { FollowUpJob.perform_later(3, 4) }}"
+
+# No es un job, es un bloque cualquiera de código — la gema no distingue.
+user = User.find_or_create_by(email: "m@m.com")
+puts "user.update! idempotent? #{IdempotencyCheck.idempotent? { user.update!(email: "m@m.com") }}"
+puts "user.increment! idempotent? #{IdempotencyCheck.idempotent? { user.increment!(:visits) }}"
+
+other_user = User.find_or_create_by(email: "n@n.com")
+puts "user.update!(email: 'hola') idempotent? #{IdempotencyCheck.idempotent? { other_user.update!(email: "hola") }}"
