@@ -1,6 +1,7 @@
 require "active_record"
 require "action_mailer"
 require "active_job"
+require "sidekiq"
 
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
 
@@ -19,3 +20,4 @@ end
 
 ActionMailer::Base.delivery_method = :test
 ActiveJob::Base.queue_adapter = :test
+Sidekiq.testing!(:inline)

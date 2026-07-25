@@ -3,30 +3,42 @@ module IdempotencyCheck
     RUNS = 3
     TIMESTAMP_COLUMNS = %w[created_at updated_at].freeze
 
+    @extra_snapshot_sources = []
+
+    class << self
+      attr_reader :extra_snapshot_sources
+    end
+
+    # Lets optional integrations (e.g. idempotency_check/sidekiq) plug in
+    # their own snapshot source without the core Checker knowing about them.
+    def self.register_snapshot_source(source)
+      @extra_snapshot_sources << source
+    end
+
     def self.idempotent?(ignore_columns: [], ignore_timestamps: false, &block)
       effective_ignore_columns = ignore_columns + (ignore_timestamps ? TIMESTAMP_COLUMNS : [])
 
-      table_snapshots = []
-      row_snapshots = []
-      mailer_snapshots = []
-      job_snapshots = []
+      snapshots = {
+        table: [],
+        row: [],
+        mailer: [],
+        job: [],
+      }
+      extra_snapshot_sources.each { |source| snapshots[source] = [] }
       http_calls = 0
 
       RUNS.times do
         http_calls += HttpTracker.track(&block)
-        table_snapshots << TableSnapshot.take
-        row_snapshots << RowSnapshot.take(ignore_columns: effective_ignore_columns)
-        mailer_snapshots << MailerSnapshot.take
-        job_snapshots << JobSnapshot.take
+        snapshots[:table] << TableSnapshot.take
+        snapshots[:row] << RowSnapshot.take(ignore_columns: effective_ignore_columns)
+        snapshots[:mailer] << MailerSnapshot.take
+        snapshots[:job] << JobSnapshot.take
+        extra_snapshot_sources.each { |source| snapshots[source] << source.take }
       end
 
-      db_looks_idempotent =
-        table_snapshots.uniq.size == 1 &&
-        row_snapshots.uniq.size == 1 &&
-        mailer_snapshots.uniq.size == 1 &&
-        job_snapshots.uniq.size == 1
+      looks_idempotent = snapshots.values.all? { |list| list.uniq.size == 1 }
 
-      return false unless db_looks_idempotent
+      return false unless looks_idempotent
       return :suspicious if http_calls.positive?
 
       true

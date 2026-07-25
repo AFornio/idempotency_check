@@ -1,5 +1,7 @@
 require_relative "../gem/lib/idempotency_check"
+require_relative "../gem/lib/idempotency_check/sidekiq"
 require_relative "setup"
+require_relative "sidekiq_jobs"
 require_relative "happy_job"
 require_relative "bad_job"
 require_relative "increment_job"
@@ -42,3 +44,6 @@ puts "user.update!(email: 'hola') idempotent? #{IdempotencyCheck.idempotent? { o
 
 puts "RandomUpdateJob idempotent? (strict)           #{IdempotencyCheck.idempotent? { RandomUpdateJob.perform }}"
 puts "RandomUpdateJob idempotent? (ignore_timestamps) #{IdempotencyCheck.idempotent?(ignore_timestamps: true) { RandomUpdateJob.perform }}"
+
+puts "BadSidekiqJob idempotent?   #{IdempotencyCheck.idempotent? { BadSidekiqJob.perform }}"
+puts "HappySidekiqJob idempotent? #{IdempotencyCheck.idempotent? { HappySidekiqJob.perform }}"

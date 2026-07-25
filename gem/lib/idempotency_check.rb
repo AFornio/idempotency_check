@@ -13,5 +13,9 @@ module IdempotencyCheck
     Checker.idempotent?(**opts, &block)
   end
 
+  def self.register_snapshot_source(source)
+    Checker.register_snapshot_source(source)
+  end
+
   private_constant :Checker
 end
