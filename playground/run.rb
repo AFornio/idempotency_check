@@ -47,3 +47,10 @@ puts "RandomUpdateJob idempotent? (ignore_timestamps) #{IdempotencyCheck.idempot
 
 puts "BadSidekiqJob idempotent?   #{IdempotencyCheck.idempotent? { BadSidekiqJob.perform }}"
 puts "HappySidekiqJob idempotent? #{IdempotencyCheck.idempotent? { HappySidekiqJob.perform }}"
+
+puts "SidekiqDuplicateArgsJob idempotent? (mismos args cada vez)    #{IdempotencyCheck.idempotent? { SidekiqDuplicateArgsJob.perform }}"
+puts "SidekiqDifferentArgsJob idempotent? (args distintos cada vez) #{IdempotencyCheck.idempotent? { SidekiqDifferentArgsJob.perform }}"
+
+# Mismo worker, literales de args distintos, dos checks independientes.
+puts "NotifyWorker.perform_async(1, 2) idempotent? #{IdempotencyCheck.idempotent? { NotifyWorker.perform_async(1, 2) }}"
+puts "NotifyWorker.perform_async(3, 4) idempotent? #{IdempotencyCheck.idempotent? { NotifyWorker.perform_async(3, 4) }}"

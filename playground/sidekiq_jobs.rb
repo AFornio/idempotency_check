@@ -22,3 +22,22 @@ class HappySidekiqJob
     user.update!(followed_up: true)
   end
 end
+
+# Enqueues/performs NotifyWorker with the SAME args every run (no guard) —
+# still non-idempotent, since the job gets duplicated regardless of args.
+class SidekiqDuplicateArgsJob
+  def self.perform
+    User.find_or_create_by(email: "r@r.com")
+    NotifyWorker.perform_async(1, 2)
+  end
+end
+
+# Enqueues/performs NotifyWorker with DIFFERENT args every run (drift based
+# on mutable state) — non-idempotent, visible in content, not just count.
+class SidekiqDifferentArgsJob
+  def self.perform
+    user = User.find_or_create_by(email: "s@s.com")
+    NotifyWorker.perform_async(user.visits)
+    user.increment!(:visits)
+  end
+end
