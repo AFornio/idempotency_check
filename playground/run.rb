@@ -1,0 +1,32 @@
+require_relative "../gem/lib/idempotency_check"
+require_relative "setup"
+require_relative "happy_job"
+require_relative "bad_job"
+require_relative "increment_job"
+require_relative "api_job"
+require_relative "mailer_job"
+require_relative "enqueue_job"
+require_relative "upsert_job"
+require_relative "sync_job"
+require_relative "job_args_cases"
+
+puts "HappyJob idempotent?     #{IdempotencyCheck.idempotent? { HappyJob.perform }}"
+puts "BadJob idempotent?       #{IdempotencyCheck.idempotent? { BadJob.perform }}"
+puts "IncrementJob idempotent? #{IdempotencyCheck.idempotent? { IncrementJob.perform }}"
+puts "ApiJob idempotent?       #{IdempotencyCheck.idempotent? { ApiJob.perform }}"
+puts "MailerJob idempotent?       #{IdempotencyCheck.idempotent? { MailerJob.perform }}"
+puts "HappyMailerJob idempotent?  #{IdempotencyCheck.idempotent? { HappyMailerJob.perform }}"
+puts "EnqueueJob idempotent?      #{IdempotencyCheck.idempotent? { EnqueueJob.perform }}"
+puts "HappyEnqueueJob idempotent? #{IdempotencyCheck.idempotent? { HappyEnqueueJob.perform }}"
+puts "UpsertJob idempotent? (strict)           #{IdempotencyCheck.idempotent? { UpsertJob.perform }}"
+puts "UpsertJob idempotent? (ignore_timestamps) #{IdempotencyCheck.idempotent?(ignore_timestamps: true) { UpsertJob.perform }}"
+puts "SyncJob idempotent?      #{IdempotencyCheck.idempotent? { SyncJob.perform }}"
+puts "HappySyncJob idempotent? #{IdempotencyCheck.idempotent? { HappySyncJob.perform }}"
+
+puts "DuplicateArgsJob idempotent? (mismos args cada vez)     #{IdempotencyCheck.idempotent? { DuplicateArgsJob.perform }}"
+puts "DifferentArgsJob idempotent? (args distintos cada vez)  #{IdempotencyCheck.idempotent? { DifferentArgsJob.perform }}"
+
+# Caso C: mismo job, mismo bloque de código, pero literales de args distintos
+# en dos checks independientes — confirmar que no se confunden entre sí.
+puts "FollowUpJob.perform_later(1, 2) idempotent? #{IdempotencyCheck.idempotent? { FollowUpJob.perform_later(1, 2) }}"
+puts "FollowUpJob.perform_later(3, 4) idempotent? #{IdempotencyCheck.idempotent? { FollowUpJob.perform_later(3, 4) }}"

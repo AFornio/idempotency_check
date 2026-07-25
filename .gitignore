@@ -1,0 +1,5 @@
+/playground/vendor/
+/playground/.bundle/
+/gem/vendor/
+/gem/.bundle/
+*.gem
