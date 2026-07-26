@@ -17,6 +17,10 @@ module IdempotencyCheck
     def self.record(job_class, args)
       @performed << [job_class, args]
     end
+
+    def self.reset!
+      @performed = []
+    end
   end
 
   class SidekiqServerTracker
@@ -41,6 +45,11 @@ module IdempotencyCheck
         end,
         performed: SidekiqPerformTracker.performed.dup,
       }
+    end
+
+    def self.reset!
+      Sidekiq::Queues.clear_all
+      SidekiqPerformTracker.reset!
     end
   end
 

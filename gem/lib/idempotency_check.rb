@@ -4,8 +4,8 @@ require_relative "idempotency_check/table_snapshot"
 require_relative "idempotency_check/row_snapshot"
 require_relative "idempotency_check/http_tracker"
 require_relative "idempotency_check/mailer_snapshot"
-require_relative "idempotency_check/job_perform_tracker"
-require_relative "idempotency_check/job_snapshot"
+require_relative "idempotency_check/active_job_perform_tracker"
+require_relative "idempotency_check/active_job_snapshot"
 require_relative "idempotency_check/checker"
 
 module IdempotencyCheck
