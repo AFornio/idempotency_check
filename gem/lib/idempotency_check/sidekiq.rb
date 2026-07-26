@@ -63,5 +63,5 @@ module IdempotencyCheck
     chain.add SidekiqServerTracker
   end
 
-  register_snapshot_source(SidekiqSnapshot)
+  register_snapshot_source(:sidekiq, SidekiqSnapshot)
 end

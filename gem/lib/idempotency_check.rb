@@ -13,8 +13,8 @@ module IdempotencyCheck
     Checker.idempotent?(**opts, &block)
   end
 
-  def self.register_snapshot_source(source)
-    Checker.register_snapshot_source(source)
+  def self.register_snapshot_source(name, source)
+    Checker.register_snapshot_source(name, source)
   end
 
   private_constant :Checker
