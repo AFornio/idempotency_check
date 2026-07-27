@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
   # Dev-only: needed to run this gem's own test suite (fixtures exercise
   # real ActiveRecord/ActionMailer/ActiveJob/Sidekiq side effects). None of
   # these are installed for someone who just installs the gem.
+  spec.add_development_dependency "active_interaction"
   spec.add_development_dependency "activejob"
   spec.add_development_dependency "actionmailer"
   spec.add_development_dependency "activerecord"
