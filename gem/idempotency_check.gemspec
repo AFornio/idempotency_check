@@ -4,8 +4,17 @@ Gem::Specification.new do |spec|
   spec.name          = "idempotency_check"
   spec.version       = IdempotencyCheck::VERSION
   spec.summary       = "Detects whether a job (and eventually other units of work) is idempotent by running it twice and comparing effects"
+  spec.description   = <<~DESC
+    idempotency_check runs a block of code multiple times and compares the
+    side effects it produces (database rows, ActionMailer deliveries,
+    ActiveJob enqueue/perform activity, and optionally Sidekiq) to detect
+    jobs that aren't safe to retry or re-run. It works on any block of Ruby
+    code, not just jobs, and has no runtime dependencies of its own.
+  DESC
   spec.authors       = ["Agustin Fornio"]
-  spec.files         = Dir["lib/**/*.rb"]
+  spec.email         = ["agustinfornio@gmail.com"]
+  spec.license       = "MIT"
+  spec.files         = Dir["lib/**/*.rb"] + ["README.md", "LICENSE.txt"]
   spec.require_paths = ["lib"]
   spec.required_ruby_version = ">= 3.0"
 
