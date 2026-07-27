@@ -72,6 +72,22 @@ class UnguardedSyncJob
   end
 end
 
+# update_column bypasses validations AND callbacks entirely (unlike
+# save/update!/touch), and does not bump updated_at on its own.
+class UpdateColumnSameValueJob
+  def self.perform
+    user = User.find_or_create_by(email: "update_column_same@example.com")
+    user.update_column(:visits, 1)
+  end
+end
+
+class UpdateColumnChangingValueJob
+  def self.perform
+    user = User.find_or_create_by(email: "update_column_changing@example.com")
+    user.update_column(:visits, user.visits + 1)
+  end
+end
+
 require "net/http"
 
 # Fakes the network layer so this test suite never makes a real outbound
