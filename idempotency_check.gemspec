@@ -16,6 +16,12 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Agustin Fornio']
   spec.email         = ['agustinfornio@gmail.com']
   spec.license       = 'MIT'
+  spec.homepage      = 'https://github.com/AFornio/idempotency_check'
+  spec.metadata      = {
+    'source_code_uri' => 'https://github.com/AFornio/idempotency_check',
+    'bug_tracker_uri' => 'https://github.com/AFornio/idempotency_check/issues',
+    'rubygems_mfa_required' => 'true'
+  }
   spec.files         = Dir['lib/**/*.rb'] + ['README.md', 'LICENSE.txt']
   spec.require_paths = ['lib']
   spec.required_ruby_version = '>= 3.0'
