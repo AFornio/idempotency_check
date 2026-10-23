@@ -76,6 +76,16 @@ expect { MyJob.perform_now(user_id) }.to be_idempotent
 expect { MyJob.perform_now(user_id) }.to be_idempotent(trust: [:http])
 ```
 
+### Minitest (also what plain Rails test cases use under the hood)
+
+```ruby
+require "idempotency_check/minitest"
+
+assert_idempotent { MyJob.perform_now(user_id) }
+refute_idempotent { MyNonIdempotentJob.perform_now(user_id) }
+assert_idempotent(trust: [:http]) { MyJob.perform_now(user_id) }
+```
+
 ### Sidekiq (native `include Sidekiq::Job` / `perform_async`)
 
 ActiveJob is supported out of the box, even when Sidekiq is its queue adapter.
