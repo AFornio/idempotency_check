@@ -12,8 +12,8 @@ module IdempotencyCheck
     IGNORED_TABLES = %w[schema_migrations ar_internal_metadata].freeze
 
     class << self
-      def track(&block)
-        new.track(&block)
+      def track(&)
+        new.track(&)
       end
     end
 

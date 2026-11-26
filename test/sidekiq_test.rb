@@ -3,7 +3,7 @@
 require 'test_helper'
 require 'idempotency_check/sidekiq'
 
-Sidekiq.testing!(:inline)
+Sidekiq.testing!(:fake)
 
 class NotifyWorker
   include Sidekiq::Job
@@ -33,7 +33,22 @@ class SidekiqTest < Minitest::Test
     refute(IdempotencyCheck.idempotent? { UnguardedSidekiqJob.perform })
   end
 
+  def test_inline_perform_async_of_a_no_op_worker_is_idempotent
+    Sidekiq.testing!(:inline) do
+      assert(IdempotencyCheck.idempotent? { NotifyWorker.perform_async(1, 2) })
+    end
+  end
+
   def test_guarded_perform_async_is_idempotent
     assert(IdempotencyCheck.idempotent? { GuardedSidekiqJob.perform })
+  end
+end
+
+class SidekiqSetupTest < Minitest::Test
+  def test_disabled_testing_mode_raises_a_clear_error
+    Sidekiq.testing!(:disable) do
+      error = assert_raises(IdempotencyCheck::SetupError) { IdempotencyCheck.idempotent? { 1 } }
+      assert_match(/testing mode/, error.message)
+    end
   end
 end

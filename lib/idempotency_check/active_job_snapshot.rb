@@ -1,23 +1,24 @@
 # frozen_string_literal: true
 
 module IdempotencyCheck
-  # Snapshots job activity so far (cumulative since the last reset!), broken
-  # down by job class and arguments so that swapping which job/args ran
-  # between runs is caught, not just a raw count. Covers both:
-  #   - enqueued jobs (perform_later), via ActiveJob's :test queue adapter
-  #   - performed jobs (perform_now), via ActiveJobPerformTracker
-  # Requires ActiveJob::Base.queue_adapter = :test in the host app.
+  # Snapshots the jobs enqueued so far (perform_later), cumulative since the
+  # last reset!, by class and arguments so swapping which job/args ran between
+  # runs is caught, not just a raw count. Jobs performed synchronously aren't
+  # tracked: their effects already show up in the other snapshots.
   class ActiveJobSnapshot
+    def self.available?
+      return false unless defined?(ActiveJob::Base)
+      return true if ActiveJob::Base.queue_adapter.respond_to?(:enqueued_jobs)
+
+      raise SetupError, 'set ActiveJob::Base.queue_adapter = :test (or pass trust: [:active_job])'
+    end
+
     def self.take
-      {
-        enqueued: ActiveJob::Base.queue_adapter.enqueued_jobs.map { |job| [job[:job].name, job[:args]] },
-        performed: ActiveJobPerformTracker.performed.dup
-      }
+      ActiveJob::Base.queue_adapter.enqueued_jobs.map { |job| [job[:job].name, job[:args]] }
     end
 
     def self.reset!
       ActiveJob::Base.queue_adapter.enqueued_jobs.clear
-      ActiveJobPerformTracker.reset!
     end
   end
 end

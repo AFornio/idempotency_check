@@ -63,14 +63,15 @@ class GuardedEnqueueJob
   end
 end
 
-class ImmediateJob < ActiveJob::Base
-  def perform(*); end
+class RealIdempotentJob < ActiveJob::Base
+  def perform
+    User.find_or_create_by(email: 'real_idempotent@example.com')
+  end
 end
 
-class UnguardedSyncJob
-  def self.perform
-    User.find_or_create_by(email: 'sync@example.com')
-    ImmediateJob.perform_now
+class RealNonIdempotentJob < ActiveJob::Base
+  def perform
+    User.create!(email: 'real_non_idempotent@example.com')
   end
 end
 
@@ -96,9 +97,11 @@ require 'net/http'
 # HTTP call. Overriding at the class level (not as a singleton method on one
 # instance) means HttpTracker's own class-level override still takes effect
 # on top of this fake.
-class Net::HTTP
-  def request(*, **)
-    Net::HTTPResponse.new('1.1', '200', 'OK')
+module Net
+  class HTTP
+    def request(*, **)
+      Net::HTTPResponse.new('1.1', '200', 'OK')
+    end
   end
 end
 

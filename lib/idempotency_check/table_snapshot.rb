@@ -12,10 +12,10 @@ module IdempotencyCheck
       def take(tables:)
         connection = ActiveRecord::Base.connection
 
-        tables.each_with_object({}) do |table, counts|
-          counts[table] = connection.select_value(
+        tables.to_h do |table|
+          [table, connection.select_value(
             "SELECT COUNT(*) FROM #{connection.quote_table_name(table)}"
-          ).to_i
+          ).to_i]
         end
       end
     end

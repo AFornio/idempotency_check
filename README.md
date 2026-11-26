@@ -6,18 +6,24 @@ It works by running your block 3 times and comparing, between runs:
 
 - database row counts and content (via ActiveRecord)
 - ActionMailer deliveries
-- ActiveJob activity (`perform_later` and `perform_now`), broken down by job class and arguments
-- optionally, Sidekiq activity (`perform_async`), if you opt in
+- ActiveJob enqueues (`perform_later`), broken down by job class and arguments
+- optionally, Sidekiq enqueues (`perform_async`), if you opt in
+
+Jobs run synchronously (`perform_now`, Sidekiq inline) aren't counted as an effect themselves: what they do shows up in the database, mail and enqueue snapshots.
 - outbound HTTP calls, which can't be verified, so they're flagged instead of assumed safe
 
-It has **no runtime dependencies**.
+It requires ActiveRecord (>= 7.1) and Ruby >= 3.2. ActionMailer, ActiveJob and Sidekiq are checked only if they're loaded.
 It works on any block of code, not only jobs — `IdempotencyCheck.idempotent? { user.update!(...) }` works the same way as it does for a job's `perform`.
 
 ## Installation
 
 ```ruby
-gem "idempotency_check"
+group :test do
+  gem "idempotency_check"
+end
 ```
+
+It's a testing tool: keep it out of production.
 
 ## Usage
 
@@ -63,6 +69,17 @@ IdempotencyCheck.idempotent?(verbose: true) { MyJob.perform_now }
 # => { result: false, reason: :suspicious_http }     # DB looked fine, but there was an unverified HTTP call
 ```
 
+### Setup it expects
+
+The checker needs to see each side effect, so in the environment where it runs:
+
+- ActiveJob's `:test` queue adapter: `include ActiveJob::TestHelper` in the test (RSpec `type: :job` specs already do), or `config.active_job.queue_adapter = :test`. Since Rails 7.2 it's no longer the default everywhere.
+- `config.action_mailer.delivery_method = :test` (the Rails test default)
+- Sidekiq, if used: fake or inline testing mode
+
+If one of those is loaded but set up differently, the check raises `IdempotencyCheck::SetupError` instead of guessing.
+Pass that source in `trust:` to skip it on purpose.
+
 ## Optional integrations
 
 Neither of these are gemspec dependencies — they're only loaded (and only need their gem installed) if you explicitly require them.
@@ -93,6 +110,7 @@ This is only needed for jobs that use Sidekiq's own API directly (`include Sidek
 
 ```ruby
 require "idempotency_check/sidekiq"
+Sidekiq.testing!(:fake) # or require "sidekiq/testing" on Sidekiq < 8.1.1
 
 IdempotencyCheck.idempotent? { MyWorker.perform_async(user_id) }
 ```
@@ -107,6 +125,8 @@ Run checks inside a transactional test, which is what they're designed for:
 
 ```ruby
 # RSpec, with use_transactional_fixtures = true (the default)
+include ActiveJob::TestHelper
+
 it "is safe to retry" do
   expect { MyJob.perform_now(user.id) }.to be_idempotent
 end
@@ -119,7 +139,7 @@ Not undone by a transaction, in a test or anywhere else:
 
 - **HTTP requests** — they really go out, 3 times.
   This is also why an unverified HTTP call makes the result `false` by default.
-- **Sidekiq's native `perform_async`** — pushes to Redis for real.
+- **Sidekiq's native `perform_async`** with testing disabled — pushes to Redis for real (the check raises `SetupError` in that case).
 - **Redis and `Rails.cache`** — no rollback.
 - **`after_commit`** — inside a test transaction the real commit never happens, so a job that depends on it may not behave the way it does in production.
 
@@ -140,5 +160,6 @@ Running a check against a development console is a bad idea for the same reason:
 
 ```bash
 bundle install
-bundle exec rake test
+bundle exec rake       # Minitest + RSpec
+bundle exec rubocop
 ```

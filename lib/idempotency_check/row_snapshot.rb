@@ -10,8 +10,8 @@ module IdempotencyCheck
       def take(tables:, ignore_columns: [])
         connection = ActiveRecord::Base.connection
 
-        tables.each_with_object({}) do |table, rows|
-          rows[table] = fetch_rows(connection, table, ignore_columns)
+        tables.to_h do |table|
+          [table, fetch_rows(connection, table, ignore_columns)]
         end
       end
 
@@ -19,7 +19,7 @@ module IdempotencyCheck
 
       def fetch_rows(connection, table, ignore_columns)
         order_columns = Array(connection.primary_key(table))
-        sql = +"SELECT * FROM #{connection.quote_table_name(table)}"
+        sql = "SELECT * FROM #{connection.quote_table_name(table)}"
         sql << " ORDER BY #{order_columns.map { |c| connection.quote_column_name(c) }.join(', ')}" if order_columns.any?
 
         rows = connection.select_all(sql).map { |row| row.except(*ignore_columns) }

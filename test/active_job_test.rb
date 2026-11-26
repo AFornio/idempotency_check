@@ -11,8 +11,12 @@ class ActiveJobTest < Minitest::Test
     assert(IdempotencyCheck.idempotent? { GuardedEnqueueJob.perform })
   end
 
-  def test_unguarded_synchronous_perform_is_not_idempotent
-    refute(IdempotencyCheck.idempotent? { UnguardedSyncJob.perform })
+  def test_top_level_perform_now_of_an_idempotent_job_is_idempotent
+    assert(IdempotencyCheck.idempotent? { RealIdempotentJob.perform_now })
+  end
+
+  def test_top_level_perform_now_of_a_non_idempotent_job_is_not_idempotent
+    refute(IdempotencyCheck.idempotent? { RealNonIdempotentJob.perform_now })
   end
 
   def test_same_args_enqueued_every_run_is_not_idempotent
